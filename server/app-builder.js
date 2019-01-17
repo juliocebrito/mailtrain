@@ -18,6 +18,7 @@ const passport = require('./lib/passport');
 const contextHelpers = require('./lib/context-helpers');
 
 const api = require('./routes/api');
+const apiToken = require('./routes/api-token');
 
 // These are routes for the new React-based client
 const reports = require('./routes/reports');
@@ -288,6 +289,7 @@ function createApp(appType) {
 
         // API endpoints
         useWith404Fallback('/api', api);
+        app.use('/api-token', apiToken);
 
         // REST endpoints
         app.use('/rest', namespacesRest);

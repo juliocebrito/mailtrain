@@ -264,6 +264,14 @@ class CampaignSender {
             tags['RSS_ENTRY_SUMMARY'] = rssEntry.summary;
             tags['RSS_ENTRY_IMAGE_URL'] = rssEntry.imageUrl;
             tags['RSS_ENTRY_CUSTOM_TAGS'] = rssEntry.customTags;
+        } else if (campaign.extra_fields) {
+            const extra_fields = JSON.parse(campaign.extra_fields);
+
+            for (let key in extra_fields) {
+                if (extra_fields.hasOwnProperty(key)) {
+                  tags['MERGE_' + key.toUpperCase()] = extra_fields[key]
+                }
+            }
         }
 
         return tags;

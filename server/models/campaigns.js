@@ -326,7 +326,7 @@ async function rawGetByTx(tx, key, id) {
             'campaigns.send_configuration', 'campaigns.from_name_override', 'campaigns.from_email_override', 'campaigns.reply_to_override', 'campaigns.subject_override',
             'campaigns.data', 'campaigns.click_tracking_disabled', 'campaigns.open_tracking_disabled', 'campaigns.unsubscribe_url', 'campaigns.scheduled',
             'campaigns.delivered', 'campaigns.unsubscribed', 'campaigns.bounced', 'campaigns.complained', 'campaigns.blacklisted', 'campaigns.opened', 'campaigns.clicks',
-            knex.raw(`GROUP_CONCAT(CONCAT_WS(\':\', campaign_lists.list, campaign_lists.segment) ORDER BY campaign_lists.id SEPARATOR \';\') as lists`)
+            'campaigns.extra_fields', knex.raw(`GROUP_CONCAT(CONCAT_WS(\':\', campaign_lists.list, campaign_lists.segment) ORDER BY campaign_lists.id SEPARATOR \';\') as lists`)
         ])
         .first();
 
@@ -495,6 +495,9 @@ async function _createTx(tx, context, entity, content) {
         const data = filteredEntity.data;
 
         filteredEntity.data = JSON.stringify(filteredEntity.data);
+        if (entity.extra_fields) {
+            filteredEntity.extra_fields = JSON.stringify(entity.extra_fields)
+        };
 
         if (filteredEntity.type === CampaignType.RSS || filteredEntity.type === CampaignType.TRIGGERED) {
             filteredEntity.status = CampaignStatus.ACTIVE;

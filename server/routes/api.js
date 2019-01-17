@@ -17,6 +17,15 @@ const shares = require('../models/shares');
 const slugify = require('slugify');
 const passport = require('../lib/passport');
 const campaigns = require('../models/campaigns');
+const {castToInteger} = require('../lib/helpers');
+const knex = require('../lib/knex');
+
+const files = require('../models/files');
+const path = require('path');
+const uploadedFilesDir = path.join(files.filesDir, 'uploaded');
+const multer = require('multer')({
+    dest: uploadedFilesDir
+});
 
 class APIError extends Error {
     constructor(msg, status) {
@@ -283,6 +292,116 @@ router.getAsync('/blacklist/get', passport.loggedIn, async (req, res) => {
 router.getAsync('/rss/fetch/:campaignCid', passport.loggedIn, async (req, res) => {
     await campaigns.fetchRssCampaign(req.context, req.params.campaignCid);
     return res.json();
+});
+
+router.postAsync('/lists/add', passport.loggedIn, async (req, res) => {
+
+    try {
+        await lists.create(req.context, req.body);
+
+        res.status(200);
+        res.json({
+            data: []
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.postAsync('/campaigns/add', passport.loggedIn, async (req, res) => {
+
+    try {
+        const campaign = await campaigns.create(req.context, req.body);
+
+        res.status(200);
+        res.json({
+            data: {
+                id: campaign
+            }
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.postAsync('/campaigns/send/:campaignId', passport.loggedIn, async (req, res) => {
+
+    try {
+        await campaigns.start(req.context, castToInteger(req.params.campaignId), null);
+
+        res.status(200);
+        res.json({
+            data: []
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.postAsync('/campaigns/send-at/:campaignId/:dateTime', passport.loggedIn, async (req, res) => {
+
+    try {
+        await campaigns.start(req.context, castToInteger(req.params.campaignId), new Date(Number.parseInt(req.params.dateTime)));
+
+        res.status(200);
+        res.json({
+            data: []
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.getAsync('/lists/prefix/:prefix', passport.loggedIn, async (req, res) => {
+
+    try {
+        const prefix = '%' + '[' + req.params.prefix + ']' + '%';
+        const query = knex('lists').select(['*']).where('name', 'like', prefix);
+        const lists = await query;
+
+        res.status(200);
+        res.json({
+            data: {
+                lists: lists
+            }
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.getAsync('/lists/namespace/:namespace', passport.loggedIn, async (req, res) => {
+
+    try {
+        const namespace = req.params.namespace;
+        const query = knex('lists').select(['*']).where('namespace', namespace);
+        const lists = await query;
+
+        res.status(200);
+        res.json({
+            data: {
+                lists: lists
+            }
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+router.postAsync('/files/campaign/attachment/:campaignId', passport.loggedIn, multer.array('files[]'), async (req, res) => {
+
+    try {
+        const type = 'campaign';
+        const subType = 'attachment';
+        await files.createFiles(req.context, type, subType, castToInteger(req.params.campaignId), req.files);
+
+        res.status(200);
+        res.json({
+            data: []
+        });
+    } catch (error) {
+        throw new Error(error);
+    }
 });
 
 
